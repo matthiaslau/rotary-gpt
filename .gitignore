@@ -1,6 +1,7 @@
 .DS_Store
 .cache*
 .idea
+.env
 *.py[cod]
 gpt_functions/*
 !gpt_functions/accent.py

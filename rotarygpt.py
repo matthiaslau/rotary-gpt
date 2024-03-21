@@ -5,6 +5,8 @@ import threading, sys
 import time
 from functools import partial
 import logging
+from dotenv import load_dotenv
+load_dotenv()  # noqa: E402
 
 from rotarygpt.conversation import Conversation
 from rotarygpt.rtp import RTPReceiver, RTPSender, SharedSocket
