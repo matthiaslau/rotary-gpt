@@ -5,6 +5,7 @@ import time
 
 from rotarygpt.audio import PCMUSilenceDetector, linear_to_mu_law_sample
 from rotarygpt.aws import PollyRequest
+from rotarygpt.fully import FullyTTSRequest
 from rotarygpt.openai import WhisperRequest, GPTRequest
 from rotarygpt.utils import clear_queue
 
@@ -49,7 +50,8 @@ class Conversation:
                 if self.shutdown_event.is_set():
                     break
 
-                self._send_polly_request(agent_text)
+                # self._send_polly_request(agent_text)
+                self._send_fully_request(agent_text)
 
                 logging.debug("Polly fully returned, waiting for audio out queue to be consumed")
 
@@ -74,6 +76,18 @@ class Conversation:
         self.response_arrived_event.set()
 
         logging.debug("Polly chunk arrived, sending to RTP")
+        converted_chunk = b''
+        for i in range(0, len(chunk), 2):
+            sample = int.from_bytes(chunk[i:i+2], 'little', signed=True)
+            mu_sample = linear_to_mu_law_sample(sample)
+            converted_chunk += mu_sample.to_bytes(1, 'little')
+
+        self.audio_chunk_queue_out.put(converted_chunk)
+
+    def on_fully_chunk(self, chunk):
+        self.response_arrived_event.set()
+
+        logging.debug("Fully chunk arrived, sending to RTP")
         converted_chunk = b''
         for i in range(0, len(chunk), 2):
             sample = int.from_bytes(chunk[i:i+2], 'little', signed=True)
@@ -152,6 +166,12 @@ class Conversation:
         polly_request = PollyRequest(self.on_polly_chunk, self.shutdown_event)
         polly_request.send_request(text)
         polly_request.get_response()
+
+    def _send_fully_request(self, text):
+        logging.debug("Sending Fully request")
+        fully_request = FullyTTSRequest(self.on_fully_chunk, self.shutdown_event)
+        fully_request.send_request(text)
+        fully_request.get_response()
 
     def _greet(self):
         logging.debug("Sending greeting")
