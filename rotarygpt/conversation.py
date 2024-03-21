@@ -21,6 +21,7 @@ class Conversation:
         self.silence_detector = PCMUSilenceDetector()
         self.shutdown_event = None
         self.response_arrived_event = threading.Event()
+        self.amplification_factor = 2
 
     def start(self, shutdown_event = None):
         logging.info("Conversation started")
@@ -210,7 +211,11 @@ class Conversation:
                     break
 
                 sample = int.from_bytes(chunk, 'little', signed=True)
-                mu_sample = linear_to_mu_law_sample(sample)
+
+                amplified_sample = sample * self.amplification_factor
+                amplified_sample = max(-32768, min(32767, int(amplified_sample)))
+
+                mu_sample = linear_to_mu_law_sample(amplified_sample)
                 converted_chunk += mu_sample.to_bytes(1, 'little')
 
         self.audio_chunk_queue_out.put(converted_chunk)
