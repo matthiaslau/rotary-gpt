@@ -114,9 +114,10 @@ def unchunk_body(body):
 
     return unchunked_body
 
+
 GPT_FUNCTIONS = [{
     "name": "get_weather_today",
-    "description": "Gets the current weather for today for Barcelona, where the user is located.",
+    "description": "Gets the current weather for today for the location, where the user is located.",
     "callable": get_weather,
     "parameters": {
         "type": "object",
