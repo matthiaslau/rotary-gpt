@@ -1,45 +1,39 @@
 # RotaryGPT
 
-Turn your rotary phone into home voice assistant with built-in ChatGPT.
-
-## Video
-
-You can watch the demo video here:
-[https://youtu.be/y9bsL0o6I-A](https://youtu.be/y9bsL0o6I-A)
+Turn a rotary phone into an AI phone featured by FullyAI. The basic code is forked from [https://github.com/tcz/rotary-gpt](https://github.com/tcz/rotary-gpt).
 
 ## Hardware
 
-I connected my old rotary phone to a Grandstream HT801 but other adapters might work for you. 
-The phone I used did not have RJ11 jack so I had to buy some RJ11 cable and do some soldering to the old German TAE connection.
-The adapter then needs a computer to connect to which is where you'll run this library.
-In my case it's a Raspberry Pi but anything will do as long as it's on the same network.
+The rotary phones need to be converted to RJ11 compatibility, for german TAE cables solder them as follows (TAE->RJ11):
 
-HT801 needs to be configured to call your server when the handset is picked up. This can be done on the web interface of the device, 
-under FXS PORT / Offhook Auto-Dial. 
+- brown -> red
+- green -> green
+- white -> black (optional)
+- yellow -> yellow (optional)
 
-For direct IP call it needs the *47 prefix. For example, for IP and port 192.168.1.140:5060, the value would be:
+The connect the RJ11 to the Grandstream HT801 and also connect a network and power cable to it.
+
+## Grandstream HT801 Configuration
+
+The HT801 needs to be configured to call our server when the handset is picked up. This can be done on the web interface of the device, 
+under FXS PORT. The defaut credentials for the web interface are `admin` and `admin`.
+
+- Offhook Auto-Dial: `*4737*16*9*47*5060` (*47 starts an IP call followed by the IP of the deployed server and the port)
+- Offhook Auto-Dial Delay: `2` (wait 2 seconds before the call is placed to allow putting the handset to the ear)
+
+## Local Setup
+
+Install the dependencies with:
+
 ```
-*47192*168*1*140*5060
-```
-
-## Installation
-
-The base library doesn't have any non-built-in Python dependencies. If you want to use the extra GPT functions, you might need to install their respective dependencies.
-
-You need to configure the following environmental variables:
-
-```
-export OPENAI_API_KEY="xxxx"
-export AWS_ACCESS_KEY="yyyy"
-export AWS_SECRET_KEY="zzz"
-
-# Set it to the name of the city you leave. Used for weather.
-export ROTARYGPT_PHYSICAL_LOCATION="Barcelona, Spain"
+pip install -r requirements.txt
 ```
 
-## Usage
+Copy the `.env.template` file to `.env` and adjust the environment variables. Currently only the OPENAI_API_KEY is used.
 
-You can run the server with:
+For a local run you currently need to set the `SERVER` variable in rotarygpt.py to `0.0.0.0`. Please remember to revert before the deployment, as fly.io needs the server to be set to `fly-global-services` to be able to receive UDP packages.
+
+You can now run the server locally with:
 
 ```
 python3 rotarygpt.py
@@ -47,29 +41,12 @@ python3 rotarygpt.py
 
 This will start the SIP server on port 5060. You can then connect to it with your rotary phone.
 
-## Features
+## Deployment
 
-Features (a.k.a. functions) live in the `gpt_functions` directory. T
-hey are loaded dynamically and can be called by the rotary phone if they export a corresponding function definition
-in `GPT_FUNCTIONS`. 
+The current deployment runs on fly.io. If you need to adjust the project you can edit the `fly.toml` file. To deploy the project run:
 
-### Weather
+```
+flyctl deploy --no-cache
+```
 
-As a feature example I left a weather function OpenMeteo's free API.
-
-### Accent
-
-A simple function that allows you to change the accent of the voice.
-
-## Extra functions
-
-The directory `extra_gpt_functions` contains some extra functions that are not loaded by default.
-I demoed them in the video but they are not included in the library because they require extra dependencies.
-
-Feel free to copy any of them over to `gpt_functions` if you want to use them.
-
-See the README in the directory for more details.
-
-## License
-
-MIT
+If not already, assign a static IP that is then configured in the HT801 offhook auto-dial setting.
