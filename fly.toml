@@ -1,0 +1,44 @@
+# fly.toml app configuration file generated for rotary-gpt-twilight-water-3112 on 2024-03-27T22:03:20+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'rotary-gpt-twilight-water-3112'
+primary_region = 'ams'
+
+[build]
+
+[env]
+  ECHO_PORT = '5060'
+
+[processes]
+  app = 'python rotarygpt.py'
+
+[http_service]
+  internal_port = 5060
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[services]]
+  protocol = 'udp'
+  internal_port = 5060
+  processes = ['app']
+
+[[services.ports]]
+    port = 5060
+
+[[services]]
+  protocol = 'udp'
+  internal_port = 5004
+  processes = ['app']
+
+[[services.ports]]
+    port = 5004
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
