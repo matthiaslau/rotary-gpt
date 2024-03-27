@@ -20,12 +20,16 @@ logging.basicConfig(level=logging.DEBUG,
 # Low context switching interval needed for timely voice packet relay
 sys.setswitchinterval(0.001)
 
+SERVER = 'fly-global-services'
+
+
 def reset_event(event, *_):
     event.clear()
 
+
 def start_rpt(threads, shutdown_event, audio_queue_in, audio_queue_out, ip, port):
     shared_socket = SharedSocket()
-    shared_socket.bind('0.0.0.0', 5004)
+    shared_socket.bind(SERVER, 5004)
 
     rtp_receiver = RTPReceiver(shared_socket, audio_queue_in)
     threads['rtp_receiver'] = threading.Thread(target=rtp_receiver.start, args=(shutdown_event,), daemon=True,
@@ -80,7 +84,7 @@ def start():
         'conversation': None,
     }
 
-    sip_server = SIPServer('0.0.0.0', 5060)
+    sip_server = SIPServer(SERVER, 5060)
 
     sip_server.register_incoming_call_callback(partial(reset_event, call_ended_event))
 
